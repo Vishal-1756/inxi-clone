@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 import os
 import platform
 import psutil
@@ -11,7 +11,7 @@ def get_system_info():
     info['system'] = {
         'os': platform.system(),
         'os_version': platform.version(),
-        'hostname': socket.gethostname(),
+        'hostname': 'Hidden',
         'kernel': platform.release(),
     }
 
@@ -35,27 +35,30 @@ def get_system_info():
     # Disk
     info['disk'] = []
     for part in psutil.disk_partitions():
-        usage = psutil.disk_usage(part.mountpoint)
-        info['disk'].append({
-            'device': part.device,
-            'mountpoint': part.mountpoint,
-            'fstype': part.fstype,
-            'total': usage.total,
-            'used': usage.used,
-            'free': usage.free,
-            'percent': usage.percent,
-        })
+        if part.fstype:
+            usage = psutil.disk_usage(part.mountpoint)
+            info['disk'].append({
+                'device': part.device,
+                'mountpoint': part.mountpoint,
+                'fstype': part.fstype,
+                'total': usage.total,
+                'used': usage.used,
+                'free': usage.free,
+                'percent': usage.percent,
+            })
 
     # Network
     info['network'] = []
     net_io = psutil.net_io_counters(pernic=True)
     for iface, addrs in psutil.net_if_addrs().items():
-        info['network'].append({
-            'interface': iface,
-            'addresses': [addr.address for addr in addrs if addr.family == socket.AF_INET],
-            'bytes_sent': net_io[iface].bytes_sent if iface in net_io else 'N/A',
-            'bytes_recv': net_io[iface].bytes_recv if iface in net_io else 'N/A',
-        })
+        ipv4_addrs = [addr.address for addr in addrs if addr.family == socket.AF_INET]
+        if ipv4_addrs:
+            info['network'].append({
+                'interface': iface,
+                'addresses': ipv4_addrs,
+                'bytes_sent': net_io[iface].bytes_sent if iface in net_io else 'N/A',
+                'bytes_recv': net_io[iface].bytes_recv if iface in net_io else 'N/A',
+            })
 
     return info
 
