@@ -1,0 +1,324 @@
+import requests
+import logging
+from pyrogram import Client, filters
+
+api_id = 27408015
+api_hash = "2f07e7c921c8d2b982df12d65a46ca46"
+bot_token = "7110340120:AAFm9EqcfyZuhYA6Gb6DPljYMSurlIxZA7g"
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
+
+
+app.run()
+
+
+base url = https://ruby-music-api.onrender.com/song?song_name={}
+
+{
+  "Singer": "Karan Aujla",
+  "Song name": "Softly",
+  "Url": "https://aac.saavncdn.com/538/727114725cd7ec508b1df0a7e4515e5e_320.mp4",
+  "Image": "https://c.saavncdn.com/538/Making-Memories-English-2023-20230818075015-500x500.jpg"
+}
+
+html page (telegram mini app)
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #000;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .button-container,
+        .song-info,
+        .audio-player,
+        .up-next-button {
+            display: none;
+        }
+
+        .active {
+            display: block;
+        }
+
+        .join-room {
+            padding: 15px 30px;
+            font-size: 20px;
+            color: white;
+            background: linear-gradient(45deg, #6a00f4, #ff00c8);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            outline: none;
+        }
+
+        .song-info {
+            text-align: center;
+            margin: 20px;
+        }
+
+        .song-image {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 5px solid white;
+        }
+
+        .song-title {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        .singer {
+            font-size: 18px;
+            color: #ccc;
+        }
+
+        .audio-player {
+            width: 90%;
+            max-width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background-color: #555;
+            border-radius: 4px;
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            width: 0;
+            height: 100%;
+            background-color: #fff;
+            border-radius: 4px;
+        }
+
+        .audio-time {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 14px;
+            color: #ccc;
+            margin-top: 4px;
+        }
+
+        .up-next-button {
+            margin-top: 20px;
+            font-size: 18px;
+            color: white;
+            background-color: #333;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .up-next-container {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 400px;
+            background-color: #000;
+            border-radius: 20px 20px 0 0;
+            transition: transform 0.3s ease-in-out;
+            transform: translateY(100%);
+            z-index: 10;
+        }
+
+        .up-next-header {
+            padding: 15px;
+            text-align: center;
+            background-color: #111;
+            border-radius: 20px 20px 0 0;
+            cursor: pointer;
+        }
+
+        .up-next-header:after {
+            content: '';
+            display: block;
+            width: 40px;
+            height: 4px;
+            background-color: #ccc;
+            border-radius: 2px;
+            margin: 10px auto 0;
+        }
+
+        .up-next-content {
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .up-next-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .up-next-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 5px;
+            object-fit: cover;
+            margin-right: 15px;
+        }
+
+        .up-next-item .song-details {
+            flex: 1;
+        }
+
+        .up-next-item .song-details p {
+            margin: 0;
+            color: #ccc;
+        }
+
+        .up-next-item .song-details p.song-name {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="button-container active">
+        <button class="join-room" onclick="joinRoom()">Join Music</button>
+    </div>
+    <div class="song-info">
+        <img id="song-image" class="song-image" src="" alt="Song Image">
+        <div id="song-name" class="song-title">Loading...</div>
+        <div id="singer" class="singer">Please wait</div>
+    </div>
+    <div class="audio-player">
+        <video id="audio-player" ontimeupdate="updateProgress()" style="display:none;">
+            Your browser does not support the video element.
+        </video>
+        <div class="progress-bar-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <div class="audio-time">
+            <span id="current-time">0:00</span>
+            <span id="total-time">0:00</span>
+        </div>
+    </div>
+    <button class="up-next-button" onclick="toggleUpNext()">Up Next</button>
+    <div class="up-next-container" id="up-next-container">
+        <div class="up-next-header" onclick="toggleUpNext()">
+            Up Next
+        </div>
+        <div class="up-next-content">
+            <div class="up-next-item">
+                <img src="https://via.placeholder.com/50" alt="Song Image">
+                <div class="song-details">
+                    <p class="song-name">Song 1</p>
+                    <p>Artist 1</p>
+                </div>
+            </div>
+            <div class="up-next-item">
+                <img src="https://via.placeholder.com/50" alt="Song Image">
+                <div class="song-details">
+                    <p class="song-name">Song 2</p>
+                    <p>Artist 2</p>
+                </div>
+            </div>
+            <!-- Add more items as needed -->
+        </div>
+    </div>
+    <script>
+        async function fetchSongDetails() {
+            try {
+                const response = await fetch('https://ruby-music-api.onrender.com/song?song_name=Cupid');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                document.getElementById('song-name').textContent = data['Song name'];
+                document.getElementById('singer').textContent = data.Singer;
+                document.getElementById('song-image').src = data.Image;
+                document.getElementById('audio-player').src = data.Url;
+
+                document.getElementById('audio-player').play();
+                console.log('Song details loaded:', data);
+            } catch (error) {
+                console.error('Error fetching song details:', error);
+                document.getElementById('song-name').textContent = 'Failed to load song';
+                document.getElementById('singer').textContent = 'Error fetching song data';
+                document.getElementById('song-image').alt = 'Error loading song image';
+            }
+        }
+
+        function joinRoom() {
+            document.querySelector('.button-container').classList.remove('active');
+            document.querySelector('.song-info').classList.add('active');
+            document.querySelector('.audio-player').classList.add('active');
+            document.querySelector('.up-next-button').classList.add('active');
+            fetchSongDetails();
+        }
+
+        function updateProgress() {
+            const audio = document.getElementById('audio-player');
+            const progressBar = document.getElementById('progress-bar');
+            const currentTime = document.getElementById('current-time');
+            const totalTime = document.getElementById('total-time');
+
+            if (!audio.duration) {
+                totalTime.textContent = '0:00';
+                return;
+            }
+
+            const progressPercent = (audio.currentTime / audio.duration) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+
+            const minutes = Math.floor(audio.currentTime / 60);
+            const seconds = Math.floor(audio.currentTime % 60);
+            currentTime.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+            const totalMinutes = Math.floor(audio.duration / 60);
+            const totalSeconds = Math.floor(audio.duration % 60);
+            totalTime.textContent = `${totalMinutes}:${totalSeconds < 10 ? '0' : ''}${totalSeconds}`;
+        }
+
+        function toggleUpNext() {
+            const upNextContainer = document.getElementById('up-next-container');
+            if (upNextContainer.style.transform === 'translateY(0px)') {
+                upNextContainer.style.transform = 'translateY(100%)';
+            } else {
+                upNextContainer.style.transform = 'translateY(0)';
+            }
+        }
+    </script>
+</body>
+</html>
+
+telegram mini app url = https://t.me/WatchYouTubeRoBot/YouTube
+
+now make a play command that send request to music api and the sing will be play on mini app add join room button below that when /play command done reply with processing after song fetching delete processing message and reply with song name and details along with telegram miniapp url button shifting on web page play the song which one requested by user using bot also add stop command that will stop the song or remove from website also and make sure it work properly 
+
+Give bot.py
+Or index.html updated 
